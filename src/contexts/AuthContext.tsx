@@ -100,10 +100,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: response.email,
         name: response.name,
         role: response.role,
-        department: response.department,
-        className: response.className,
-        phoneNumber: response.phoneNumber,
-        verified: response.verified,
       };
 
       setUser(userData);
@@ -113,7 +109,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData));
       
       console.log('Login successful, user data:', userData);
-      console.log('User department:', userData.department);
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.response?.data || 'Login failed');

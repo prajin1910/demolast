@@ -173,9 +173,7 @@ public class AuthService {
             userRepository.save(managementUser);
             
             return new LoginResponse(jwt, userDetails.getId(), userDetails.getEmail(), 
-                                   userDetails.getName(), "MANAGEMENT", managementUser.getDepartment(),
-                                   managementUser.getClassName(), managementUser.getPhoneNumber(),
-                                   managementUser.isVerified());
+                                   userDetails.getName(), "MANAGEMENT");
         }
         
         // Regular user login
@@ -187,39 +185,27 @@ public class AuthService {
         
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
-        // Get user details for complete response
-        User currentUser = null;
-        Alumni currentAlumni = null;
-        String role = "ALUMNI"; // Default to ALUMNI if not found in User collection
-        
         // Update last login
         Optional<User> user = userRepository.findByEmail(loginRequest.getEmail());
         if (user.isPresent()) {
-            currentUser = user.get();
-            currentUser.setLastLogin(LocalDateTime.now());
-            userRepository.save(currentUser);
-            role = currentUser.getRole().name();
+            user.get().setLastLogin(LocalDateTime.now());
+            userRepository.save(user.get());
         } else {
             // Check if this is an alumni login
             Optional<Alumni> alumni = alumniRepository.findByEmail(loginRequest.getEmail());
             if (alumni.isPresent()) {
-                currentAlumni = alumni.get();
-                currentAlumni.setLastLogin(LocalDateTime.now());
-                alumniRepository.save(currentAlumni);
+                alumni.get().setLastLogin(LocalDateTime.now());
+                alumniRepository.save(alumni.get());
             }
         }
         
-        // Build response with complete user information
-        String department = currentUser != null ? currentUser.getDepartment() : 
-                           (currentAlumni != null ? currentAlumni.getDepartment() : null);
-        String className = currentUser != null ? currentUser.getClassName() : null; // Alumni don't have className
-        String phoneNumber = currentUser != null ? currentUser.getPhoneNumber() : 
-                            (currentAlumni != null ? currentAlumni.getPhoneNumber() : null);
-        boolean verified = currentUser != null ? currentUser.isVerified() : 
-                          (currentAlumni != null ? currentAlumni.isVerified() : false);
+        String role = "ALUMNI"; // Default to ALUMNI if not found in User collection
+        if (user.isPresent()) {
+            role = user.get().getRole().name();
+        }
         
         return new LoginResponse(jwt, userDetails.getId(), userDetails.getEmail(), 
-                               userDetails.getName(), role, department, className, phoneNumber, verified);
+                               userDetails.getName(), role);
     }
     
     public String resendOTP(String email) {

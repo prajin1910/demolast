@@ -29,58 +29,49 @@ public class AttendanceService {
     @Autowired
     private ActivityService activityService;
     
-    // Get students by department and class for professor - SIMPLIFIED VERSION
+    // Get students by department and class for professor
     public List<Map<String, Object>> getStudentsByDepartmentAndClass(String department, String className) {
         try {
-            System.out.println("=== ATTENDANCE SERVICE DEBUG ===");
-            System.out.println("Searching for students in department: '" + department + "', class: '" + className + "'");
+            System.out.println("AttendanceService: Getting students for department: " + department + ", class: " + className);
             
-            // First, get ALL students to debug
+            // First, let's check all students in the database
             List<User> allStudents = userRepository.findByRole(User.UserRole.STUDENT);
-            System.out.println("Total students in database: " + allStudents.size());
+            System.out.println("AttendanceService: Total students in database: " + allStudents.size());
             
-            // Log all students for debugging
-            for (User student : allStudents) {
-                System.out.println("Student found: " + student.getName() + 
-                                 " | Dept: '" + student.getDepartment() + 
-                                 "' | Class: '" + student.getClassName() + 
-                                 "' | Verified: " + student.isVerified() +
-                                 " | Email: " + student.getEmail());
+            // Log first few students for debugging
+            for (int i = 0; i < Math.min(5, allStudents.size()); i++) {
+                User student = allStudents.get(i);
+                System.out.println("Student " + (i+1) + ": " + student.getName() + 
+                                 ", Dept: '" + student.getDepartment() + "'" +
+                                 ", Class: '" + student.getClassName() + "'" +
+                                 ", Email: " + student.getEmail());
             }
             
-            // Try different queries to find the issue
-            System.out.println("\n=== TESTING DIFFERENT QUERIES ===");
+            // Debug the exact query parameters
+            System.out.println("Query parameters - Department: '" + department + "', Class: '" + className + "'");
+            System.out.println("Department length: " + department.length() + ", Class length: " + className.length());
             
-            // 1. Find by department only
-            List<User> deptStudents = userRepository.findByRoleAndDepartment(User.UserRole.STUDENT, department);
-            System.out.println("Students in department '" + department + "': " + deptStudents.size());
+            // Check students by department only
+            List<User> departmentStudents = userRepository.findByRoleAndDepartment(User.UserRole.STUDENT, department);
             
-            // 2. Find by department and verified
-            List<User> verifiedDeptStudents = userRepository.findByRoleAndDepartmentAndVerified(User.UserRole.STUDENT, department, true);
-            System.out.println("Verified students in department '" + department + "': " + verifiedDeptStudents.size());
+            // Log department students for debugging
+            for (int i = 0; i < Math.min(3, departmentStudents.size()); i++) {
+                User student = departmentStudents.get(i);
+                System.out.println("Dept Student " + (i+1) + ": " + student.getName() + 
+                                 ", Dept: '" + student.getDepartment() + "'" +
+                                 ", Class: '" + student.getClassName() + "'" +
+                                 ", Email: " + student.getEmail());
+            }
+            System.out.println("AttendanceService: Students in department '" + department + "': " + departmentStudents.size());
             
-            // 3. Try exact match query
-            List<User> exactStudents = userRepository.findByRoleAndDepartmentAndClassNameAndVerified(
-                    User.UserRole.STUDENT, department, className, true);
-            System.out.println("Exact match students (dept: '" + department + "', class: '" + className + "'): " + exactStudents.size());
+            // Now try the original query
+            List<User> students = userRepository.findByRoleAndDepartmentAndClassName(
+                User.UserRole.STUDENT, department, className);
             
-            // 4. Manual filtering as backup
-            List<User> manualFiltered = allStudents.stream()
-                    .filter(s -> s.getRole() == User.UserRole.STUDENT)
-                    .filter(s -> s.isVerified())
-                    .filter(s -> department.equals(s.getDepartment()))
-                    .filter(s -> className.equals(s.getClassName()))
-                    .collect(Collectors.toList());
-            System.out.println("Manual filtered students: " + manualFiltered.size());
+            System.out.println("AttendanceService: Found " + students.size() + " students for department: '" + 
+                             department + "' and class: '" + className + "'");
             
-            // Use the query that works, prefer the exact match
-            List<User> finalStudents = exactStudents.isEmpty() ? manualFiltered : exactStudents;
-            
-            System.out.println("Final result: " + finalStudents.size() + " students");
-            System.out.println("=== END ATTENDANCE SERVICE DEBUG ===\n");
-            
-            // Convert to response format
-            return finalStudents.stream().map(student -> {
+            return students.stream().map(student -> {
                 Map<String, Object> studentData = new HashMap<>();
                 studentData.put("id", student.getId());
                 studentData.put("name", student.getName());
@@ -90,13 +81,10 @@ public class AttendanceService {
                 studentData.put("className", student.getClassName());
                 return studentData;
             }).collect(Collectors.toList());
-            
         } catch (Exception e) {
-            System.err.println("Error in getStudentsByDepartmentAndClass: " + e.getMessage());
+            System.err.println("Error getting students: " + e.getMessage());
             e.printStackTrace();
-            
-            // Return empty list as fallback
-            return new ArrayList<>();
+            throw new RuntimeException("Failed to get students: " + e.getMessage());
         }
     }
     

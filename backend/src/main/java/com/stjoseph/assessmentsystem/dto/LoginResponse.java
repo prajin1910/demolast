@@ -7,21 +7,13 @@ public class LoginResponse {
     private String email;
     private String name;
     private String role;
-    private String department;
-    private String className;
-    private String phoneNumber;
-    private boolean verified;
     
-    public LoginResponse(String accessToken, String id, String email, String name, String role, String department, String className, String phoneNumber, boolean verified) {
+    public LoginResponse(String accessToken, String id, String email, String name, String role) {
         this.token = accessToken;
         this.id = id;
         this.email = email;
         this.name = name;
         this.role = role;
-        this.department = department;
-        this.className = className;
-        this.phoneNumber = phoneNumber;
-        this.verified = verified;
     }
     
     // Getters and setters
@@ -42,16 +34,4 @@ public class LoginResponse {
     
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
-    
-    public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
-    
-    public String getClassName() { return className; }
-    public void setClassName(String className) { this.className = className; }
-    
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-    
-    public boolean isVerified() { return verified; }
-    public void setVerified(boolean verified) { this.verified = verified; }
 }
